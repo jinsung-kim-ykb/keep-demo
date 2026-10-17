@@ -303,7 +303,7 @@ const mins = ms => Math.max(0, Math.round(ms/1000)); // demo clock: 1s = 1min
 const pct = (a,b) => b ? Math.round(a/b*100) : 0;
 const won = n => n.toLocaleString("ko-KR") + "원";
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-const R = mulberry32(20261018); // seeded: same morning data every load
+const R = mulberry32(Math.floor(Math.random()*1e9)); // 열 때마다 다른 오전 데이터
 function pickIdx(ws, rnd){ const s=ws.reduce((a,b)=>a+b,0); let x=rnd()*s; for(let i=0;i<ws.length;i++){ x-=ws[i]; if(x<0) return i; } return ws.length-1; }
 
 // ================= catalog =================
@@ -369,9 +369,12 @@ const log = msg => { const d=document.createElement("div"); d.innerHTML=`<time>$
 // ---- 오전(11~13시) 데이터: 시드로 고정 생성 ----
 const HOURS = [11,12,13,14,15,16,17,18,19,20];
 const FORECAST = [120,190,240,285,335,380,350,285,185,105]; // 지난 4주 같은 요일 평균 방문객 (데모)
-const visitors = {11:118, 12:186, 13:241};
-const seedReg  = 45, seedLeft = 5, seedNoshow = 2;
-[[11,8],[12,13],[13,17]].forEach(([h,n])=>{
+const jit = (v, p) => Math.round(v * (1 - p + R()*2*p)); // ±p 범위로 흔들기
+const visitors = {11:jit(118,.15), 12:jit(186,.15), 13:jit(241,.15)};
+const seedCounts = [[11,jit(8,.25)],[12,jit(13,.25)],[13,jit(17,.25)]];
+const seedLeft = 2 + Math.floor(R()*6), seedNoshow = Math.floor(R()*3);
+const seedReg = seedCounts.reduce((a,[,n])=>a+n,0) + seedLeft + seedNoshow;
+seedCounts.forEach(([h,n])=>{
   for(let i=0;i<n;i++){
     const v = {id:++vseq, hour:h, name:"오전 손님", items:genItems(1+Math.floor(R()*3.3), R), resolved:true, matched:true, method:"rfid", seed:true};
     v.items.forEach(it=>{ const o=guessOutcome(it,R); it.out = o==="taken"?"taken":"returned"; it.reason = o==="taken"?null:o; it.bought = it.out==="taken" && R()<.9; });
@@ -607,7 +610,7 @@ function today(){
 function renderPos(){
   const t = today();
   $("posbox").innerHTML = t.pending
-    ? `<span>POS 매칭 대기 <b>${t.pending}건</b></span><button class="small" id="posBtn">POS 판매 엑셀 불러와 매칭</button>`
+    ? `<span>POS 매칭 대기 <b>${t.pending}건</b>${simOn?' · 자동 유입 중엔 15초마다 자동 매칭':''}</span><button class="small" id="posBtn">POS 판매 엑셀 불러와 매칭</button>`
     : `<span><span class="live-dot"></span>POS 판매 매칭 완료 · ${clockStr()} 기준</span>`;
 }
 function stepHTML(label, v, rate, src, stCls, stTxt){
@@ -711,15 +714,29 @@ function renderStore(){
       </div>
     </div>`;
 }
+// 다른 점포도 누적 카운트로 들고 있다가 자동 유입 중에 같이 쌓이게 (비율은 카운트에서 계산)
 const STORES = [
-  {name:"명동점", V:1840, reg:.081, lost:.12, conv:.38, size:.31},
-  {name:"홍대점", V:1520, reg:.064, lost:.21, conv:.33, size:.27},
-  {name:"신촌점", V:980,  reg:.072, lost:.08, conv:.41, size:.22},
-];
+  {name:"명동점", V:1840, reg:.081, lost:.12, conv:.38, size:.31, pace:1.25},
+  {name:"홍대점", V:1520, reg:.064, lost:.21, conv:.33, size:.27, pace:1.05},
+  {name:"신촌점", V:980,  reg:.072, lost:.08, conv:.41, size:.22, pace:.7},
+].map(s=>{
+  const V = jit(s.V,.1), Rg = Math.round(V*s.reg*(.9+R()*.2)), items = Math.round(Rg*2.4), back = Math.round(items*.55);
+  return {name:s.name, pace:s.pace, p:s, cV:V, cRg:Rg, cLost:Math.round(Rg*s.lost*(.85+R()*.3)), cItems:items, cSold:Math.round(items*s.conv*(.9+R()*.2)), cBack:back, cSize:Math.round(back*s.size*(.85+R()*.3))};
+});
+function storesTick(){ // 데모 1분마다 각 점포에 방문·피팅·구매가 조금씩 쌓임
+  STORES.forEach(s=>{
+    const v = Math.round((3 + R()*3) * s.pace); s.cV += v;
+    if(R() < s.p.reg*v){
+      s.cRg++; if(R() < s.p.lost){ s.cLost++; return; }
+      const n = 1 + Math.floor(R()*3.3); s.cItems += n;
+      for(let i=0;i<n;i++){ if(R() < s.p.conv) s.cSold++; else if(R() < .65){ s.cBack++; if(R() < s.p.size) s.cSize++; } }
+    }
+  });
+}
 function renderHQ(){
   const t = today();
   const me_ = {name:"강남점", live:true, V:t.V, reg:t.Rg/Math.max(1,t.V), lost:t.lost/Math.max(1,t.Rg), conv:t.sold/Math.max(1,t.mItems), size:t.rs.size/Math.max(1,t.back)};
-  const rows = [me_, ...STORES];
+  const rows = [me_, ...STORES.map(s=>({name:s.name, V:s.cV, reg:s.cRg/s.cV, lost:s.cLost/Math.max(1,s.cRg), conv:s.cSold/Math.max(1,s.cItems), size:s.cSize/Math.max(1,s.cBack)}))];
   const worst = {reg: Math.min(...rows.map(r=>r.reg)), lost: Math.max(...rows.map(r=>r.lost)), conv: Math.min(...rows.map(r=>r.conv)), size: Math.max(...rows.map(r=>r.size))};
   const cell = (r,k) => `<td class="num-font ${r[k]===worst[k]?'worst':''}">${Math.round(r[k]*100)}%</td>`;
   // 체인 전체 SKU: 강남점 실측 + 타 점포 (데모)
@@ -790,7 +807,15 @@ function simTick(){
   renderAll();
   simTimer = setTimeout(simTick, 3500+Math.random()*3000);
 }
-$("sim").onchange = e => { simOn = e.target.checked; if(simOn){ simTick(); doorTick(); } else { clearTimeout(simTimer); clearTimeout(doorTimer); } };
+let lastPos = Date.now();
+function simTick2(){ // 1초(데모 1분)마다: 다른 점포 누적 + 15초마다 POS 자동 매칭
+  if(!simOn) return;
+  storesTick();
+  if(Date.now()-lastPos > 15000 && visits.some(v=>v.resolved && !v.matched)){ posMatch(); lastPos = Date.now(); }
+}
+setInterval(simTick2, 1000);
+function setSim(on){ simOn = on; $("sim").checked = on; if(on){ simTick(); doorTick(); } else { clearTimeout(simTimer); clearTimeout(doorTimer); } }
+$("sim").onchange = e => setSim(e.target.checked);
 
 // ================= wiring =================
 $("callNext").onclick = ()=>{ callNext(); renderAll(); };
@@ -799,6 +824,7 @@ function renderAll(){ renderCustomer(); renderStaff(); renderDoor(); renderData(
 setInterval(()=>{ renderStaff(); renderDoor(); renderData(); $("clock").textContent = `데모 시계 1초 = 1분 · ${clockStr()}`; }, 1000);
 renderAll();
 log("스파오 강남점 2층 피팅룸 대기 오픈 · 오전(11~13시) 데이터 불러옴");
+setSim(true); // 열자마자 손님이 들어오고 숫자가 움직이게
 
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
