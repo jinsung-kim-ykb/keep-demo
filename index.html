@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Keep — 피팅룸 대기 데모</title>
+<title>Keep — 방문·피팅·구매 데모</title>
 <style>
   :root{
     --ink:#1C1F26; --paper:#FFFFFF; --mist:#F3F4F6; --line:#E5E7EB; --gray:#6B7280;
     --acc:#FF5A36; --acc-soft:#FFF1EC; --ok:#1F9D55; --ok-soft:#E8F6EE;
+    --blue:#2F6FEB; --blue-soft:#EAF1FE; --amber:#B7791F; --amber-soft:#FDF6E7;
   }
   *{box-sizing:border-box}
   html,body{margin:0;background:#ECEDF0;color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;font-size:15px;line-height:1.45}
@@ -17,41 +18,48 @@
   button.small{padding:6px 10px;font-size:13px;border-radius:8px}
   button:disabled{opacity:.35;cursor:default}
   button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  .num-font{font-family:"Inter","Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums}
 
-  header{display:flex;align-items:center;gap:16px;padding:14px 22px;background:var(--paper);border-bottom:1px solid var(--line)}
+  header{display:flex;align-items:center;gap:16px;padding:14px 22px;background:var(--paper);border-bottom:1px solid var(--line);flex-wrap:wrap}
   header h1{font-size:17px;margin:0;font-weight:700}
   header h1 span{color:var(--gray);font-weight:400;margin-left:8px}
-  header .right{margin-left:auto;display:flex;gap:10px;align-items:center;font-size:13px;color:var(--gray)}
+  header .right{margin-left:auto;display:flex;gap:12px;align-items:center;font-size:13px;color:var(--gray);flex-wrap:wrap}
+  .disclaimer{font-size:12px;color:var(--amber);background:var(--amber-soft);padding:4px 9px;border-radius:999px}
   .toggle{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
-  .toggle input{appearance:none;width:38px;height:22px;border-radius:11px;background:#D1D5DB;position:relative;transition:.2s;margin:0}
+  .toggle input{appearance:none;width:38px;height:22px;border-radius:11px;background:#D1D5DB;position:relative;transition:.2s;margin:0;flex:none}
   .toggle input::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s}
   .toggle input:checked{background:var(--ok)}
   .toggle input:checked::after{left:19px}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .seg button{background:transparent;color:var(--gray);border-radius:0;padding:5px 10px;font-size:12px}
+  .seg button.on{background:var(--ink);color:#fff}
 
-  main{display:grid;grid-template-columns:400px 1fr 340px;gap:20px;padding:20px 22px;align-items:start}
-  @media (max-width:1100px){main{grid-template-columns:1fr}}
-  .panel{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px}
+  main{display:grid;grid-template-columns:380px minmax(0,1fr) 300px;gap:20px;padding:20px 22px;align-items:start}
+  @media (max-width:1180px){main{grid-template-columns:380px minmax(0,1fr)} .side{grid-column:1/-1}}
+  @media (max-width:860px){main{grid-template-columns:minmax(0,1fr)}}
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0}
   .panel h2{font-size:13px;font-weight:600;color:var(--gray);margin:0 0 12px}
+  .side{display:grid;gap:20px;min-width:0}
+  .data{grid-column:1/-1}
 
   /* phone */
-  .phone{width:360px;margin:0 auto;background:var(--ink);border-radius:36px;padding:12px}
-  .screen{background:var(--paper);border-radius:26px;min-height:640px;padding:22px 20px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+  .phone{width:356px;max-width:100%;margin:0 auto;background:var(--ink);border-radius:36px;padding:12px}
+  .screen{background:var(--paper);border-radius:26px;min-height:620px;padding:22px 20px;display:flex;flex-direction:column;position:relative;overflow:hidden}
   .brand{font-weight:800;letter-spacing:-.02em;font-size:18px}
   .brand small{color:var(--gray);font-weight:400;font-size:12px;margin-left:6px}
-  .qr{width:120px;height:120px;margin:22px auto 6px;display:grid;grid-template-columns:repeat(15,1fr);gap:1px;padding:6px;background:#fff;border:1px solid var(--line);border-radius:8px}
+  .qr{width:110px;height:110px;margin:20px auto 6px;display:grid;grid-template-columns:repeat(15,1fr);gap:1px;padding:6px;background:#fff;border:1px solid var(--line);border-radius:8px}
   .qr i{background:var(--ink);border-radius:1px}
   .qr i.o{background:transparent}
   .h{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:6px 0 2px}
   .sub{color:var(--gray);font-size:14px}
   label.f{display:block;margin-top:14px;font-size:13px;color:var(--gray)}
   input.t{width:100%;margin-top:6px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:16px}
-  .row{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:10px}
+  .row{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px}
   .stepper{display:flex;align-items:center;gap:12px}
   .stepper b{min-width:22px;text-align:center;font-size:17px}
   .cta{margin-top:auto;width:100%;padding:15px;font-size:16px;border-radius:12px}
-
   .ticket{margin-top:18px;background:var(--mist);border-radius:18px;padding:22px 18px;text-align:center}
-  .ticket .num{font-size:88px;font-weight:800;line-height:1;letter-spacing:-.04em;font-family:"Inter","Helvetica Neue",Arial,sans-serif}
+  .ticket .num{font-size:84px;font-weight:800;line-height:1;letter-spacing:-.04em;font-family:"Inter","Helvetica Neue",Arial,sans-serif}
   .ticket .num small{font-size:20px;color:var(--gray);font-weight:600;letter-spacing:0;margin-left:2px}
   .ticket .meta{display:flex;justify-content:center;gap:24px;margin-top:14px}
   .ticket .meta div b{display:block;font-size:22px;font-weight:700}
@@ -60,65 +68,152 @@
   .ticket.called .num small,.ticket.called .meta div span{color:rgba(255,255,255,.75)}
   .hint{margin-top:16px;padding:12px 14px;border-radius:10px;background:var(--acc-soft);color:var(--ink);font-size:14px}
   .hint.ok{background:var(--ok-soft)}
-  .push{position:absolute;left:14px;right:14px;top:14px;background:var(--ink);color:#fff;border-radius:14px;padding:12px 14px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);transform:translateY(-120%);transition:transform .35s}
+  .push{position:absolute;left:14px;right:14px;top:14px;background:var(--ink);color:#fff;border-radius:14px;padding:12px 14px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);transform:translateY(-120%);transition:transform .35s;z-index:2}
   .push.show{transform:translateY(0)}
   .push b{display:block;font-size:13px;color:#C9CED6;margin-bottom:2px;font-weight:500}
   @media (prefers-reduced-motion:reduce){.push{transition:none}}
 
   /* staff */
-  .rooms{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-  .room{border:1px solid var(--line);border-radius:12px;padding:12px;min-height:84px}
+  .rooms{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+  .room{border:1px solid var(--line);border-radius:12px;padding:11px;min-height:96px;min-width:0}
   .room.busy{background:var(--acc-soft);border-color:#FFC8B8}
   .room .rn{font-size:12px;color:var(--gray)}
-  .room .who{font-weight:700;margin-top:4px}
-  .room .t{font-size:12px;color:var(--gray);margin-top:2px}
-  .staff-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .room .who{font-weight:700;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .room .t{font-size:12px;color:var(--gray);margin-top:1px}
+  .room .scan{margin-top:6px;font-size:11px;color:var(--blue);background:var(--blue-soft);border-radius:6px;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .staff-top{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
   .staff-top .stat{font-size:13px;color:var(--gray)}
   .staff-top .stat b{color:var(--ink);font-size:15px}
   table{width:100%;border-collapse:collapse}
-  th{font-size:12px;color:var(--gray);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);font-weight:500}
-  td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:14px}
+  th{font-size:12px;color:var(--gray);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);font-weight:500;white-space:nowrap}
+  td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:14px}
   td.n{font-weight:800;font-size:16px;width:52px}
-  .tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:999px;background:var(--mist);color:var(--gray);margin-left:6px}
+  .tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:999px;background:var(--mist);color:var(--gray);margin-left:6px;white-space:nowrap}
   .tag.size{background:var(--acc-soft);color:var(--acc)}
   .tag.called{background:var(--ok-soft);color:var(--ok)}
   tr.called td{background:#FCFFFD}
-  .empty{color:var(--gray);font-size:14px;padding:26px 8px;text-align:center}
+  .empty{color:var(--gray);font-size:14px;padding:22px 8px;text-align:center}
   .warn{color:var(--acc);font-weight:600}
-
-  /* hq */
-  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .kpi{background:var(--mist);border-radius:12px;padding:12px}
-  .kpi b{display:block;font-size:26px;font-weight:800;letter-spacing:-.02em;font-family:"Inter","Helvetica Neue",Arial,sans-serif}
-  .kpi span{font-size:12px;color:var(--gray)}
-  .kpi.acc b{color:var(--acc)}
-  .chart{margin-top:16px}
-  .chart h3{font-size:13px;font-weight:600;margin:0 0 8px;color:var(--gray)}
-  .bars{display:flex;align-items:flex-end;gap:5px;height:90px;border-bottom:1px solid var(--line);padding-bottom:0}
-  .bars div{flex:1;background:#C9CED6;border-radius:3px 3px 0 0;position:relative}
-  .bars div.hot{background:var(--acc)}
-  .bars div.now{background:var(--ink)}
-  .axis{display:flex;gap:5px;font-size:10px;color:var(--gray);margin-top:4px}
-  .axis span{flex:1;text-align:center}
-  .log{margin-top:16px;font-size:12px;color:var(--gray);max-height:180px;overflow:auto;border-top:1px solid var(--line);padding-top:8px}
-  .log div{padding:3px 0;border-bottom:1px dashed var(--line)}
-  .log time{color:var(--ink);font-weight:600;margin-right:6px;font-family:Arial,sans-serif}
   .note{font-size:12px;color:var(--gray);margin-top:10px}
+  .subhead{display:flex;align-items:baseline;gap:8px;margin:18px 0 8px}
+  .subhead h3{font-size:14px;margin:0}
+  .subhead span{font-size:12px;color:var(--gray)}
+  .badge{font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;background:var(--acc);color:#fff}
+
+  /* exit result cards */
+  .exit{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#FFFCFA}
+  .exit.auto{opacity:.92}
+  .exit .eh{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:14px}
+  .exit .eh b{font-weight:800}
+  .exit .eh .sp{margin-left:auto}
+  .item{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px dashed var(--line);flex-wrap:wrap}
+  .item .nm{flex:1 1 150px;font-size:13px;min-width:0}
+  .item .nm small{color:var(--gray);margin-left:4px}
+  .chips{display:flex;gap:4px;flex-wrap:wrap}
+  .chip{padding:5px 9px;font-size:12px;border-radius:999px;background:var(--paper);color:var(--ink);border:1px solid var(--line)}
+  .chip.take.on{background:var(--ok);border-color:var(--ok);color:#fff}
+  .chip.rs.on{background:var(--acc);border-color:var(--acc);color:#fff}
+
+  /* side */
+  .door{display:flex;align-items:center;gap:14px}
+  .door .big{font-size:40px;font-weight:800;letter-spacing:-.03em;line-height:1}
+  .beam{width:14px;height:14px;border-radius:50%;background:#D1D5DB;flex:none;transition:background .1s}
+  .beam.hit{background:var(--acc)}
+  .mini{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .mini div{background:var(--mist);border-radius:10px;padding:9px 10px}
+  .mini b{display:block;font-size:18px}
+  .mini span{font-size:12px;color:var(--gray)}
+  .log{font-size:12px;color:var(--gray);max-height:300px;overflow:auto}
+  .log div{padding:4px 0;border-bottom:1px dashed var(--line)}
+  .log time{color:var(--ink);font-weight:600;margin-right:6px;font-family:Arial,sans-serif}
+
+  /* data panel */
+  .dtabs{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  .dtabs button.tab{background:var(--mist);color:var(--gray);font-size:14px;padding:8px 14px}
+  .dtabs button.tab.on{background:var(--ink);color:#fff}
+  .posbox{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--gray)}
+  .posbox b{color:var(--ink)}
+  .funnel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin-bottom:8px}
+  .fs{position:relative;padding:14px 16px;background:var(--mist);border-right:2px solid var(--paper)}
+  .fs:first-child{border-radius:12px 0 0 12px}
+  .fs:last-child{border-radius:0 12px 12px 0;border-right:0}
+  .fs .lab{font-size:12px;color:var(--gray)}
+  .fs .v{font-size:32px;font-weight:800;letter-spacing:-.03em;line-height:1.15}
+  .fs .r{font-size:13px;color:var(--ink);margin-top:2px}
+  .fs .r b{color:var(--blue)}
+  .fs .src{font-size:11px;color:var(--gray);margin-top:8px}
+  .st{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;margin-right:4px;vertical-align:1px}
+  .st.have{background:var(--ok-soft);color:var(--ok)}
+  .st.new{background:var(--blue-soft);color:var(--blue)}
+  .st.soon{background:var(--amber-soft);color:var(--amber)}
+  .st.later{background:var(--mist);color:var(--gray);border:1px solid var(--line)}
+  .leak{display:flex;gap:10px;align-items:center;font-size:13px;background:var(--acc-soft);border-radius:10px;padding:10px 12px;margin:10px 0 4px}
+  .leak b{color:var(--acc);font-size:16px;white-space:nowrap}
+  .grid2{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:22px;align-items:start}
+  @media (max-width:980px){.grid2{grid-template-columns:minmax(0,1fr)}}
+  .card{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;min-width:0}
+  .card h4{margin:0 0 4px;font-size:14px}
+  .card .cap{font-size:12px;color:var(--gray);margin-bottom:10px}
+  .bar{height:8px;background:var(--mist);border-radius:4px;overflow:hidden;min-width:60px}
+  .bar i{display:block;height:100%;background:var(--blue);border-radius:4px}
+  .bar.low i{background:var(--acc)}
+  .stack{display:flex;height:22px;border-radius:6px;overflow:hidden;margin:6px 0 8px}
+  .stack div{height:100%}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--gray)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:0}
+  .alert{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:13px}
+  .alert:first-of-type{border-top:0}
+  .alert .ic{flex:none;width:26px;height:26px;border-radius:8px;background:var(--acc-soft);color:var(--acc);display:grid;place-items:center;font-weight:800}
+  .alert .ic.blue{background:var(--blue-soft);color:var(--blue)}
+  .alert b{display:block;font-size:14px}
+  .alert span{color:var(--gray)}
+  .hours{display:flex;align-items:flex-end;gap:6px;height:110px;border-bottom:1px solid var(--line);margin-top:22px}
+  .hours .col{flex:1;position:relative;height:100%;display:flex;align-items:flex-end}
+  .hours .fc{position:absolute;bottom:0;left:0;right:0;background:#E3E6EB;border-radius:3px 3px 0 0}
+  .hours .ac{position:absolute;bottom:0;left:0;right:0;background:var(--ink);border-radius:3px 3px 0 0}
+  .hours .col.hot .fc{background:#FFD3C6}
+  .hours .plus{position:absolute;left:50%;transform:translateX(-50%);font-size:10px;font-weight:800;color:var(--acc);white-space:nowrap}
+  .axis{display:flex;gap:6px;font-size:10px;color:var(--gray);margin-top:4px}
+  .axis span{flex:1;text-align:center}
+  .srcs td,.srcs th{font-size:13px}
+  .srcs td:first-child{white-space:nowrap;font-weight:600}
+  .quad{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .q{border-radius:10px;padding:10px;min-height:96px;background:var(--mist)}
+  .q.bad{background:var(--acc-soft)}
+  .q.good{background:var(--ok-soft)}
+  .q.exp{background:var(--blue-soft)}
+  .q h5{margin:0;font-size:13px}
+  .q p{margin:0 0 6px;font-size:11px;color:var(--gray)}
+  .q .tag{margin:2px 4px 0 0;background:rgba(255,255,255,.75);color:var(--ink)}
+  .locked{position:relative}
+  .locked .blur{filter:blur(3px);opacity:.55;pointer-events:none;user-select:none}
+  .locked .over{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:10px}
+  .locked .over b{font-size:14px}
+  .locked .over span{font-size:12px;color:var(--gray);max-width:300px}
+  .worst{color:var(--acc);font-weight:700}
+  .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:5px;vertical-align:1px}
+  .scroll-x{overflow-x:auto}
 
   /* mobile */
   .tabs{display:none}
   @media (max-width:700px){
-    header{padding:10px 14px;flex-wrap:wrap;gap:8px}
+    header{padding:10px 14px;gap:8px}
     header h1 span{display:block;margin:2px 0 0;font-size:12px}
-    header .right{margin-left:0;width:100%;justify-content:space-between}
+    header .right{margin-left:0;width:100%;justify-content:space-between;gap:8px}
     #clock{display:none}
     main{padding:12px;gap:12px;padding-bottom:70px}
     .panel{padding:14px}
-    .phone{width:100%;max-width:360px;padding:8px;border-radius:28px}
+    .phone{padding:8px;border-radius:28px}
     .screen{min-height:560px;border-radius:22px;padding:18px 16px}
-    .ticket .num{font-size:72px}
-    .rooms{grid-template-columns:repeat(2,1fr)}
-    td,th{padding:8px 4px;font-size:13px}
+    .ticket .num{font-size:70px}
+    .rooms{grid-template-columns:repeat(2,minmax(0,1fr))}
+    td,th{padding:7px 4px;font-size:13px}
+    .funnel{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .fs{border-radius:0!important;border:0;border-bottom:2px solid var(--paper)}
+    .fs .v{font-size:26px}
+    .posbox{margin-left:0;width:100%;justify-content:space-between}
+    .scroll-x table{min-width:620px}
+    .scroll-x td:first-child b{white-space:nowrap}
     .tabs{display:flex;position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--line);z-index:10}
     .tabs button{flex:1;background:transparent;color:var(--gray);border-radius:0;padding:12px 0;font-size:13px;border-top:2px solid transparent}
     .tabs button.on{color:var(--ink);font-weight:700;border-top-color:var(--acc)}
@@ -127,10 +222,11 @@
 </head>
 <body>
 <header>
-  <h1>Keep <span>피팅룸 대기 · 스파오 강남점 (데모)</span></h1>
+  <h1>Keep <span>방문 → 피팅 → 구매 · 스파오 강남점 (데모)</span></h1>
   <div class="right">
+    <span class="disclaimer">모든 수치는 데모용 가상 데이터</span>
     <label class="toggle"><input type="checkbox" id="sim"> 손님 자동 유입</label>
-    <span id="clock">데모 시계 1초 = 1분 · 14:00</span>
+    <span id="clock" class="num-font">데모 시계 1초 = 1분 · 14:00</span>
     <button class="ghost small" id="reset">처음부터</button>
   </div>
 </header>
@@ -147,6 +243,10 @@
   <!-- STAFF -->
   <section class="panel">
     <h2>직원 태블릿 — 피팅룸 앞에 두는 화면</h2>
+    <div class="staff-top">
+      <span class="stat">상품 인식</span>
+      <div class="seg" id="method"><button data-m="rfid" class="on">RFID 자동</button><button data-m="barcode">바코드 스캔</button></div>
+    </div>
     <div class="rooms" id="rooms"></div>
     <div class="staff-top">
       <div class="stat">대기 <b id="sWait">0</b>팀</div>
@@ -159,75 +259,152 @@
       <tbody id="queue"></tbody>
     </table>
     <p class="note">호출 후 6분(데모 6초) 안 오면 노쇼 처리 가능. 사이즈 도움 표시는 호출 전에 사이즈를 미리 준비하라는 신호.</p>
+
+    <div class="subhead"><h3>피팅 결과</h3><span id="exitCount"></span></div>
+    <div id="results"></div>
+    <p class="note">놓고 간 옷만 사유를 한 번 누르면 끝. 누르지 않은 옷은 '가져감'으로 기록되고, 실제 구매 여부는 POS와 맞춰봅니다.</p>
   </section>
 
-  <!-- HQ -->
-  <section class="panel">
-    <h2>본사 대시보드 — 매장이 처음 보게 되는 숫자</h2>
-    <div class="kpis">
-      <div class="kpi"><b id="kWait">0</b><span>지금 대기 중</span></div>
-      <div class="kpi"><b id="kAvg">–</b><span>평균 대기 (분)</span></div>
-      <div class="kpi acc"><b id="kLeft">0</b><span>대기 중 이탈</span></div>
-      <div class="kpi"><b id="kUtil">0%</b><span>피팅룸 가동률</span></div>
+  <!-- SIDE -->
+  <div class="side">
+    <section class="panel">
+      <h2>매장 입구 — 방문객 카운터</h2>
+      <div class="door"><span class="beam" id="beam"></span><div><div class="big num-font" id="vToday">0</div><div class="sub">오늘 방문객</div></div></div>
+      <div class="mini">
+        <div><b class="num-font" id="vHour">0</b><span>이번 시간 방문</span></div>
+        <div><b class="num-font" id="vReg">0%</b><span>방문 중 피팅 등록</span></div>
+      </div>
+      <p class="note">적외선 빔 방식. 지나간 횟수만 세고 사람을 식별하지 않아 영상·개인정보 처리가 없습니다.</p>
+    </section>
+    <section class="panel">
+      <h2>실시간 기록</h2>
+      <div class="log" id="log"></div>
+    </section>
+  </div>
+
+  <!-- DATA -->
+  <section class="panel data" id="data">
+    <div class="dtabs" id="dtabs">
+      <button class="tab on" data-tab="funnel">퍼널</button>
+      <button class="tab" data-tab="store">점장 · 오늘 바꿀 것</button>
+      <button class="tab" data-tab="hq">본사 · 점포와 상품</button>
+      <div class="posbox" id="posbox"></div>
     </div>
-    <div class="chart">
-      <h3>시간대별 대기 인원 (오늘)</h3>
-      <div class="bars" id="bars"></div>
-      <div class="axis" id="axis"></div>
-    </div>
-    <div class="log" id="log"></div>
+    <div id="dbody"></div>
   </section>
 </main>
 
+<nav class="tabs"><button data-t="0" class="on">고객 폰</button><button data-t="1">직원 태블릿</button><button data-t="3">데이터</button></nav>
+
 <script>
-// ---------- state ----------
-const ROOMS = 4;
-let t0 = Date.now();
-let seq = 0;
-let queue = [];          // {id,num,name,items,size,status,createdAt,calledAt,startedAt,room,sim}
-let rooms = Array.from({length:ROOMS},(_,i)=>({i,occupant:null,endsAt:0}));
-let me = null;           // the presenter's own customer
-let left = 0, noshow = 0, doneDur = [];
-let simOn = false, simTimer = null;
-const names = ["손님 A","손님 B","손님 C","손님 D","손님 E","손님 F","손님 G","손님 H"];
+// ================= helpers =================
 const $ = id => document.getElementById(id);
 const mins = ms => Math.max(0, Math.round(ms/1000)); // demo clock: 1s = 1min
-const log = (msg) => {
-  const d = document.createElement("div");
-  const m = 840 + mins(Date.now()-t0); // 14:00 + elapsed
-  d.innerHTML = `<time>${String(Math.floor(m/60)).padStart(2,"0")}:${String(m%60).padStart(2,"0")}</time>${msg}`;
-  $("log").prepend(d);
-};
+const pct = (a,b) => b ? Math.round(a/b*100) : 0;
+const won = n => n.toLocaleString("ko-KR") + "원";
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R = mulberry32(Math.floor(Math.random()*1e9)); // 열 때마다 다른 오전 데이터
+function pickIdx(ws, rnd){ const s=ws.reduce((a,b)=>a+b,0); let x=rnd()*s; for(let i=0;i<ws.length;i++){ x-=ws[i]; if(x<0) return i; } return ws.length-1; }
 
-// ---------- customer screen ----------
-function qrHTML(){
-  let s = "";
-  for(let i=0;i<225;i++){ const r=(i*7919+i*i*31)%11; s += `<i class="${r<5?'':'o'}"></i>`; }
-  return `<div class="qr">${s}</div>`;
+// ================= catalog =================
+const REASONS = [
+  {k:"size",  l:"사이즈", c:"#FF5A36"},
+  {k:"fit",   l:"핏",     c:"#F59E0B"},
+  {k:"color", l:"색상",   c:"#8B5CF6"},
+  {k:"price", l:"가격",   c:"#2F6FEB"},
+  {k:"none",  l:"그냥",   c:"#9CA3AF"},
+];
+const RL = Object.fromEntries(REASONS.map(r=>[r.k,r.l]));
+const SIZES = ["S","M","L","XL"], SIZE_W = [.15,.4,.3,.15];
+// w = 얼마나 자주 피팅룸에 들어가나, take = 가져갈 확률, rs = 놓고 갈 때 사유 분포 [사이즈,핏,색상,가격,그냥]
+const CAT = [
+  {code:"SP24-101", name:"와이드 데님 팬츠",   color:"중청",       price:49900,  w:12, take:.30, rs:[.62,.20,.04,.04,.10]},
+  {code:"SP24-102", name:"오버핏 크루넥 니트", color:"오트밀",     price:39900,  w:10, take:.55, rs:[.15,.35,.15,.10,.25]},
+  {code:"SP24-103", name:"투턱 와이드 슬랙스", color:"차콜",       price:45900,  w:9,  take:.26, rs:[.22,.58,.05,.05,.10]},
+  {code:"SP24-104", name:"후드 집업",          color:"멜란지",     price:49900,  w:8,  take:.62, rs:[.20,.25,.15,.10,.30]},
+  {code:"SP24-105", name:"숏 패딩 점퍼",       color:"블랙",       price:99900,  w:7,  take:.24, rs:[.10,.15,.08,.52,.15]},
+  {code:"SP24-106", name:"코듀로이 셔츠",      color:"브라운",     price:39900,  w:7,  take:.27, rs:[.08,.15,.57,.05,.15]},
+  {code:"SP24-107", name:"기모 조거 팬츠",     color:"블랙",       price:35900,  w:6,  take:.60, rs:[.25,.25,.10,.10,.30]},
+  {code:"SP24-108", name:"울 블렌드 코트",     color:"카멜",       price:129000, w:5,  take:.20, rs:[.18,.20,.10,.42,.10]},
+  {code:"SP24-109", name:"스트라이프 롱슬리브",color:"네이비",     price:19900,  w:5,  take:.58, rs:[.20,.25,.20,.05,.30]},
+  {code:"SP24-110", name:"플리스 베스트",      color:"아이보리",   price:39900,  w:5,  take:.45, rs:[.20,.30,.15,.10,.25]},
+  {code:"SP24-111", name:"카고 팬츠",          color:"카키",       price:45900,  w:5,  take:.33, rs:[.45,.28,.07,.05,.15]},
+  {code:"SP24-112", name:"케이블 가디건",      color:"그린",       price:45900,  w:4,  take:.30, rs:[.10,.15,.52,.08,.15]},
+];
+const SKU = Object.fromEntries(CAT.map(s=>[s.code,s]));
+// 진열은 됐지만 아무도 안 집은 상품 (RFID 재고 연동 이후 미리보기용)
+const UNPICKED = [["SP24-131","퀼팅 숄더백"],["SP24-127","니트 비니 3색"],["SP24-119","린넨 블렌드 셔츠"],["SP24-124","와이드 치노 팬츠 베이지"],["SP24-133","레더 벨트"]];
+
+function genItems(n, rnd){
+  const items = [];
+  for(let i=0;i<n;i++){
+    const s = CAT[pickIdx(CAT.map(c=>c.w), rnd)];
+    items.push({sku:s.code, size:SIZES[pickIdx(SIZE_W, rnd)], sel:"taken", out:null, reason:null, bought:null});
+  }
+  return items;
 }
+function guessOutcome(it, rnd){ // 시뮬레이션 손님용: 가져감/사유 자동 결정
+  const s = SKU[it.sku];
+  return rnd() < s.take ? "taken" : REASONS[pickIdx(s.rs, rnd)].k;
+}
+
+// ================= state =================
+const ROOMS = 4;
+const t0 = Date.now();
+let seq = 0, vseq = 0;
+let queue = [];          // 오늘 14:00 이후 대기열
+let rooms = Array.from({length:ROOMS},(_,i)=>({i,occupant:null,endsAt:0}));
+let me = null;           // 발표자 본인 손님
+let left = 0, noshow = 0, doneDur = [];
+let simOn = false, simTimer = null, doorTimer = null;
+let method = "rfid";
+let visits = [];         // 피팅룸에 들어간 방문 (상품 단위 데이터 포함)
+let dataTab = "funnel";
+const names = ["손님 A","손님 B","손님 C","손님 D","손님 E","손님 F","손님 G","손님 H"];
+
+const nowHour = () => 14 + Math.floor(mins(Date.now()-t0)/60);
+const clockStr = () => { const m=840+mins(Date.now()-t0); return `${String(Math.floor(m/60)).padStart(2,"0")}:${String(m%60).padStart(2,"0")}`; };
+const log = msg => { const d=document.createElement("div"); d.innerHTML=`<time>${clockStr()}</time>${msg}`; $("log").prepend(d); };
+
+// ---- 오전(11~13시) 데이터: 시드로 고정 생성 ----
+const HOURS = [11,12,13,14,15,16,17,18,19,20];
+const FORECAST = [120,190,240,285,335,380,350,285,185,105]; // 지난 4주 같은 요일 평균 방문객 (데모)
+const jit = (v, p) => Math.round(v * (1 - p + R()*2*p)); // ±p 범위로 흔들기
+const visitors = {11:jit(118,.15), 12:jit(186,.15), 13:jit(241,.15)};
+const seedCounts = [[11,jit(8,.25)],[12,jit(13,.25)],[13,jit(17,.25)]];
+const seedLeft = 2 + Math.floor(R()*6), seedNoshow = Math.floor(R()*3);
+const seedReg = seedCounts.reduce((a,[,n])=>a+n,0) + seedLeft + seedNoshow;
+seedCounts.forEach(([h,n])=>{
+  for(let i=0;i<n;i++){
+    const v = {id:++vseq, hour:h, name:"오전 손님", items:genItems(1+Math.floor(R()*3.3), R), resolved:true, matched:true, method:"rfid", seed:true};
+    v.items.forEach(it=>{ const o=guessOutcome(it,R); it.out = o==="taken"?"taken":"returned"; it.reason = o==="taken"?null:o; it.bought = it.out==="taken" && R()<.9; });
+    visits.push(v);
+  }
+});
+
+// ================= customer screen =================
+function qrHTML(){ let s=""; for(let i=0;i<225;i++){ const r=(i*7919+i*i*31)%11; s+=`<i class="${r<5?'':'o'}"></i>`; } return `<div class="qr">${s}</div>`; }
 function renderCustomer(){
-  const sc = $("screen");
-  const push = $("push");
+  const sc = $("screen"), push = $("push");
   let html = `<div class="brand">Keep<small>스파오 강남점 · 2층 피팅룸</small></div>`;
-  if(!me || me.status==="left" || me.status==="noshow" || me.status==="done"){
+  if(!me || ["left","noshow","done"].includes(me.status)){
     html += qrHTML();
     html += `<div class="h" style="text-align:center">피팅룸 대기 등록</div>
       <div class="sub" style="text-align:center">줄 서지 말고 둘러보세요. 차례가 되면 알려드려요.</div>
       <label class="f">이름 또는 전화번호 뒤 4자리<input class="t" id="cName" placeholder="예: 3016" maxlength="8"></label>
-      <div class="row"><span>입어볼 옷</span><div class="stepper"><button class="ghost small" id="mi">−</button><b id="cItems">2</b><button class="ghost small" id="pl">+</button></div></div>
-      <div class="row"><span>사이즈 도움 필요</span><label class="toggle"><input type="checkbox" id="cSize"></label></div>
-      <button class="cta acc" id="join">대기 등록</button>`;
+      <div class="row"><span>입어볼 옷</span><div class="stepper"><button class="ghost small" id="mi" aria-label="줄이기">−</button><b id="cItems">2</b><button class="ghost small" id="pl" aria-label="늘리기">+</button></div></div>
+      <div class="row"><span>사이즈 도움 필요</span><label class="toggle"><input type="checkbox" id="cSize" aria-label="사이즈 도움 필요"></label></div>
+      <button class="cta acc" id="join" style="margin-top:16px">대기 등록</button>`;
   } else {
     const ahead = queue.filter(q=>q.status==="waiting" && q.num<me.num).length;
-    const eta = Math.max(2, ahead*3 + (rooms.filter(r=>r.occupant).length? 3:0));
-    const called = me.status==="called";
-    const inroom = me.status==="inroom";
+    const eta = Math.max(2, ahead*3 + (rooms.some(r=>r.occupant)?3:0));
+    const called = me.status==="called", inroom = me.status==="inroom";
     html += `<div class="ticket ${called?'called':''}">
         <div class="sub" style="${called?'color:rgba(255,255,255,.8)':''}">${called?'지금 피팅룸으로 오세요':inroom?'피팅 중':'내 대기 번호'}</div>
-        <div class="num">${called? (me.room+1)+'<small>번 룸</small>' : me.num+'<small>번</small>'}</div>
+        <div class="num">${called||inroom ? (me.room+1)+'<small>번 룸</small>' : me.num+'<small>번</small>'}</div>
         <div class="meta">
           ${called? `<div><b>${me.items}벌</b><span>준비됨</span></div><div><b>6분</b><span>안에 도착</span></div>`
-          : inroom? `<div><b>${me.room+1}번 룸</b><span>사용 중</span></div>`
+          : inroom? `<div><b>${me.items}벌</b><span>입어보는 중</span></div>`
           : `<div><b>${ahead}팀</b><span>내 앞에</span></div><div><b>약 ${eta}분</b><span>예상 대기</span></div>`}
         </div>
       </div>`;
@@ -235,15 +412,15 @@ function renderCustomer(){
     else if(inroom) html += `<div class="hint ok">다른 사이즈가 필요하면 룸 안 벨을 눌러주세요.</div>`;
     else html += `<div class="hint">매장을 계속 둘러보세요. 차례 2팀 전에 알림을 보내드려요.</div>
       <div class="sub" style="margin-top:14px">지금 ${queue.filter(q=>q.status==="waiting").length}팀 대기 · 피팅룸 ${rooms.filter(r=>!r.occupant).length}개 비어 있음</div>`;
-    if(!inroom) html += `<button class="ghost cta" id="leave" style="margin-top:auto">${called?'못 가요 (취소)':'대기 취소'}</button>`;
+    if(!inroom) html += `<button class="ghost cta" id="leave">${called?'못 가요 (취소)':'대기 취소'}</button>`;
   }
-  sc.innerHTML = html;
-  sc.prepend(push);
+  sc.innerHTML = html; sc.prepend(push);
   if($("join")){
-    $("pl").onclick = ()=>{ $("cItems").textContent = Math.min(9, +$("cItems").textContent+1); };
+    $("pl").onclick = ()=>{ $("cItems").textContent = Math.min(6, +$("cItems").textContent+1); };
     $("mi").onclick = ()=>{ $("cItems").textContent = Math.max(1, +$("cItems").textContent-1); };
     $("join").onclick = ()=>{
       const name = $("cName").value.trim() || "나";
+      addVisitor(); // 발표자도 입구를 지나온 손님
       me = addCustomer(name, +$("cItems").textContent, $("cSize").checked, false);
       log(`<b>${me.num}번</b> ${name} 대기 등록 (${me.items}벌${me.size?', 사이즈 도움':''})`);
       renderAll();
@@ -251,69 +428,105 @@ function renderCustomer(){
   }
   if($("leave")) $("leave").onclick = ()=>{ leaveQueue(me); renderAll(); };
 }
-function notify(text){
-  $("pushText").textContent = text;
-  $("push").classList.add("show");
-  setTimeout(()=>$("push").classList.remove("show"), 4500);
+function notify(text){ $("pushText").textContent=text; $("push").classList.add("show"); setTimeout(()=>$("push").classList.remove("show"), 4500); }
+
+// ================= door =================
+function addVisitor(){
+  const h = nowHour();
+  visitors[h] = (visitors[h]||0) + 1;
+  const b = $("beam"); b.classList.add("hit"); setTimeout(()=>b.classList.remove("hit"), 120);
+}
+function doorTick(){ // 시뮬: 시간당 약 280명 = 데모 1초에 약 4.7명
+  if(!simOn) return;
+  addVisitor(); if(Math.random()<.18) addVisitor();
+  renderDoor();
+  doorTimer = setTimeout(doorTick, 180+Math.random()*80);
+}
+const totalVisitors = () => Object.values(visitors).reduce((a,b)=>a+b,0);
+const totalReg = () => seedReg + queue.length;
+function renderDoor(){
+  $("vToday").textContent = totalVisitors().toLocaleString("ko-KR");
+  $("vHour").textContent = (visitors[nowHour()]||0).toLocaleString("ko-KR");
+  $("vReg").textContent = pct(totalReg(), totalVisitors()) + "%";
 }
 
-// ---------- queue ops ----------
+// ================= queue ops =================
 function addCustomer(name, items, size, sim){
   const c = {id:++seq, num:seq+11, name, items, size, status:"waiting", createdAt:Date.now(), sim};
-  queue.push(c);
-  return c;
+  queue.push(c); return c;
 }
 function callNext(){
-  const free = rooms.find(r=>!r.occupant);
-  const next = queue.find(q=>q.status==="waiting");
+  const free = rooms.find(r=>!r.occupant), next = queue.find(q=>q.status==="waiting");
   if(!free || !next) return;
-  next.status = "called"; next.calledAt = Date.now(); next.room = free.i;
-  free.occupant = next; free.endsAt = 0;
+  next.status="called"; next.calledAt=Date.now(); next.room=free.i;
+  free.occupant=next; free.endsAt=0;
   log(`<b>${next.num}번</b> ${next.name} → ${free.i+1}번 룸 호출`);
   if(next===me) notify(`${next.room+1}번 피팅룸이 준비됐어요. 6분 안에 와주세요.`);
   if(next.sim) setTimeout(()=>{ if(next.status==="called"){ checkIn(next); renderAll(); } }, 4000+Math.random()*3000);
-  // "2팀 전" pre-alert for me
   if(me && me.status==="waiting" && queue.filter(q=>q.status==="waiting" && q.num<me.num).length===1) notify("앞에 1팀 남았어요. 피팅룸 근처로 와주세요.");
 }
 function checkIn(c){
-  c.status = "inroom"; c.startedAt = Date.now();
+  c.status="inroom"; c.startedAt=Date.now();
   doneDur.push(c.calledAt - c.createdAt);
-  const r = rooms[c.room]; r.endsAt = Date.now() + 9000 + Math.random()*6000; // 9–15 demo-min
-  log(`<b>${c.num}번</b> ${c.name} ${c.room+1}번 룸 입장 (대기 ${mins(c.calledAt-c.createdAt)}분)`);
+  // 입장하면서 들고 간 옷을 SKU 단위로 식별
+  c.visit = {id:++vseq, hour:nowHour(), num:c.num, name:c.name, items:genItems(c.items, Math.random), resolved:false, matched:false, method, sim:c.sim};
+  visits.push(c.visit);
+  const r = rooms[c.room]; r.endsAt = Date.now() + 9000 + Math.random()*6000;
+  const how = method==="rfid" ? "천장 RFID 리더기 자동 인식" : "직원 바코드 스캔";
+  log(`<b>${c.num}번</b> ${c.name} ${c.room+1}번 룸 입장 (대기 ${mins(c.calledAt-c.createdAt)}분) · ${c.items}벌 ${how}`);
   if(c===me) notify("입장 확인됐어요. 편하게 입어보세요.");
   setTimeout(()=>{ if(c.status==="inroom") finish(c); }, r.endsAt - Date.now());
 }
 function finish(c){
-  c.status = "done"; rooms[c.room].occupant = null; rooms[c.room].endsAt = 0;
+  c.status="done"; rooms[c.room].occupant=null; rooms[c.room].endsAt=0;
   log(`<b>${c.num}번</b> ${c.name} 피팅 완료, ${c.room+1}번 룸 비움`);
   if(c===me) notify("피팅이 끝났어요. 이용해 주셔서 감사합니다.");
+  if(c.sim) autoResolve(c.visit);
+  if(simOn) setTimeout(()=>{ callNext(); renderAll(); }, 1500); // 자동 유입 중엔 빈 룸에 다음 팀 호출
   renderAll();
 }
-function noShow(c){
-  c.status = "noshow"; noshow++; rooms[c.room].occupant = null;
-  log(`<b>${c.num}번</b> ${c.name} 노쇼 처리`);
+function autoResolve(v){ // 시뮬 손님은 직원이 탭하는 장면을 보여준 뒤 자동 확정
+  v.auto = true;
+  setTimeout(()=>{ v.items.forEach(it=> it.sel = guessOutcome(it, Math.random)); renderStaff(); }, 1300);
+  setTimeout(()=>{ if(!v.resolved){ resolveVisit(v); renderAll(); } }, 3200);
 }
+function resolveVisit(v){
+  v.items.forEach(it=>{ if(it.sel==="taken"){ it.out="taken"; it.reason=null; } else { it.out="returned"; it.reason=it.sel; } });
+  v.resolved = true; v.matched = false;
+  const back = v.items.filter(i=>i.out==="returned");
+  const why = back.length ? ` · 놓고 감 ${back.length}벌 (${back.map(i=>RL[i.reason]).join(", ")})` : "";
+  log(`<b>${v.num}번</b> 피팅 결과: 가져감 ${v.items.length-back.length}벌${why}`);
+}
+function noShow(c){ c.status="noshow"; noshow++; rooms[c.room].occupant=null; log(`<b>${c.num}번</b> ${c.name} 노쇼 처리`); }
 function leaveQueue(c){
-  if(c.status==="called"){ rooms[c.room].occupant = null; }
-  c.status = "left"; left++;
+  if(c.status==="called") rooms[c.room].occupant=null;
+  c.status="left"; left++;
   log(`<span class="warn"><b>${c.num}번</b> ${c.name} 대기 중 이탈</span>`);
 }
+function posMatch(){ // 일 마감 후 POS 판매 엑셀을 받아 SKU 단위로 매칭하는 장면
+  const pend = visits.filter(v=>v.resolved && !v.matched);
+  let sold = 0;
+  pend.forEach(v=>{ v.items.forEach(it=>{ it.bought = it.out==="taken" && Math.random()<.9; if(it.bought) sold++; }); v.matched = true; });
+  log(`POS 판매 내역 매칭: 방문 ${pend.length}건, ${sold}벌 판매 확인`);
+}
 
-// ---------- staff render ----------
+// ================= staff render =================
 function renderStaff(){
   $("rooms").innerHTML = rooms.map(r=>{
     if(!r.occupant) return `<div class="room"><div class="rn">${r.i+1}번 룸</div><div class="who" style="color:var(--ok)">비어 있음</div></div>`;
     const c = r.occupant;
-    const state = c.status==="called" ? `호출 · ${mins(Date.now()-c.calledAt)}분 경과` : `사용 중 · ${mins(Date.now()-c.startedAt)}분`;
-    return `<div class="room busy"><div class="rn">${r.i+1}번 룸</div><div class="who">${c.num}번 ${c.name}</div><div class="t">${state}</div></div>`;
+    if(c.status==="called") return `<div class="room busy"><div class="rn">${r.i+1}번 룸</div><div class="who">${c.num}번 ${c.name}</div><div class="t">호출 · ${mins(Date.now()-c.calledAt)}분 경과</div></div>`;
+    const v = c.visit, label = v.method==="rfid" ? "RFID" : "바코드";
+    const names = v.items.map(i=>SKU[i.sku].name.split(" ").slice(-1)[0]+" "+i.size).join(", ");
+    return `<div class="room busy"><div class="rn">${r.i+1}번 룸</div><div class="who">${c.num}번 ${c.name}</div><div class="t">사용 중 · ${mins(Date.now()-c.startedAt)}분</div><div class="scan" title="${names}">${label} ${v.items.length}벌 · ${names}</div></div>`;
   }).join("");
   const rowsQ = queue.filter(q=>q.status==="waiting"||q.status==="called");
   $("sWait").textContent = queue.filter(q=>q.status==="waiting").length;
   $("sCalled").textContent = queue.filter(q=>q.status==="called").length;
   $("sFree").textContent = rooms.filter(r=>!r.occupant).length;
   $("callNext").disabled = !(rooms.some(r=>!r.occupant) && queue.some(q=>q.status==="waiting"));
-  if(!rowsQ.length){ $("queue").innerHTML = `<tr><td colspan="5" class="empty">대기 중인 손님이 없어요. 고객 폰에서 대기 등록을 하거나 손님 자동 유입을 켜보세요.</td></tr>`; return; }
-  $("queue").innerHTML = rowsQ.map(c=>{
+  if(!rowsQ.length) $("queue").innerHTML = `<tr><td colspan="5" class="empty">대기 중인 손님이 없어요. 고객 폰에서 대기 등록을 하거나 손님 자동 유입을 켜보세요.</td></tr>`;
+  else $("queue").innerHTML = rowsQ.map(c=>{
     const w = mins(Date.now()-c.createdAt);
     const late = c.status==="called" && (Date.now()-c.calledAt) > 6000;
     return `<tr class="${c.status}">
@@ -326,61 +539,296 @@ function renderStaff(){
           : `<button class="small acc" data-a="in" data-id="${c.id}">입장</button> <button class="ghost small" data-a="ns" data-id="${c.id}" ${late?'':'disabled'}>노쇼</button>`}
       </td></tr>`;
   }).join("");
-  $("queue").querySelectorAll("button").forEach(b=>b.onclick=()=>{
-    const c = queue.find(q=>q.id==b.dataset.id);
-    if(b.dataset.a==="call"){ // call specific
-      const free = rooms.find(r=>!r.occupant); if(!free) return;
-      // reorder so callNext picks this one
-      queue.splice(queue.indexOf(c),1); const idx = queue.findIndex(q=>q.status==="waiting"); queue.splice(idx<0?queue.length:idx,0,c); callNext();
-    } else if(b.dataset.a==="in") checkIn(c);
-    else if(b.dataset.a==="ns") noShow(c);
-    renderAll();
+
+  // 피팅 결과 (퇴실한 방문, 미확정)
+  const pend = visits.filter(v=>!v.seed && !v.resolved && rooms.every(r=>!r.occupant || r.occupant.visit!==v) && queue.some(q=>q.visit===v && q.status==="done"));
+  $("exitCount").innerHTML = pend.length ? `<span class="badge">${pend.length}</span>` : "퇴실하면 여기에 떠요";
+  $("results").innerHTML = pend.length ? pend.map(v=>`
+    <div class="exit ${v.auto?'auto':''}">
+      <div class="eh"><b>${v.num}번</b> ${v.name} · ${v.items.length}벌 퇴실 <span class="tag">${v.method==="rfid"?"RFID 인식":"바코드 스캔"}</span>
+        <span class="sp">${v.auto?'<span class="sub" style="font-size:12px">직원 입력 중…</span>':`<button class="small" data-done="${v.id}">확인</button>`}</span></div>
+      ${v.items.map((it,i)=>{ const s=SKU[it.sku]; return `<div class="item">
+        <div class="nm">${s.name}<small>${s.color} · ${it.size}</small></div>
+        <div class="chips">
+          <button class="chip take ${it.sel==="taken"?'on':''}" data-v="${v.id}" data-i="${i}" data-k="taken">가져감</button>
+          ${REASONS.map(r=>`<button class="chip rs ${it.sel===r.k?'on':''}" data-v="${v.id}" data-i="${i}" data-k="${r.k}">${r.l}</button>`).join("")}
+        </div></div>`; }).join("")}
+    </div>`).join("") : `<div class="empty" style="padding:14px 8px">아직 퇴실한 손님이 없어요.</div>`;
+}
+$("queue").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-a]"); if(!b) return;
+  const c = queue.find(q=>q.id==b.dataset.id); if(!c) return;
+  if(b.dataset.a==="call"){
+    if(!rooms.some(r=>!r.occupant)) return;
+    queue.splice(queue.indexOf(c),1); const idx=queue.findIndex(q=>q.status==="waiting"); queue.splice(idx<0?queue.length:idx,0,c); callNext();
+  } else if(b.dataset.a==="in" && c.status==="called") checkIn(c);
+  else if(b.dataset.a==="ns" && c.status==="called") noShow(c);
+  renderAll();
+});
+$("results").addEventListener("click", e=>{
+  const d = e.target.closest("button[data-done]");
+  if(d){ const v=visits.find(x=>x.id==d.dataset.done); if(v && !v.resolved){ resolveVisit(v); renderAll(); } return; }
+  const b = e.target.closest("button[data-k]"); if(!b) return;
+  const v = visits.find(x=>x.id==b.dataset.v); if(!v || v.auto) return;
+  const it = v.items[+b.dataset.i];
+  it.sel = (it.sel===b.dataset.k && b.dataset.k!=="taken") ? "taken" : b.dataset.k;
+  renderStaff();
+});
+$("method").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-m]"); if(!b) return;
+  method = b.dataset.m;
+  $("method").querySelectorAll("button").forEach(x=>x.classList.toggle("on", x===b));
+  log(method==="rfid" ? "상품 인식 방식: 천장 RFID 리더기 (재고용 태그 그대로 사용)" : "상품 인식 방식: 피팅룸 입구 바코드 스캔");
+});
+
+// ================= aggregates =================
+function skuStats(){
+  const m = {};
+  CAT.forEach(s=> m[s.code] = {s, fit:0, taken:0, mfit:0, bought:0, rs:{size:0,fit:0,color:0,price:0,none:0}, sizeBack:{}});
+  visits.filter(v=>v.resolved).forEach(v=> v.items.forEach(it=>{
+    const x = m[it.sku]; x.fit++;
+    if(it.out==="taken") x.taken++; else { x.rs[it.reason]++; if(it.reason==="size") x.sizeBack[it.size]=(x.sizeBack[it.size]||0)+1; }
+    if(v.matched){ x.mfit++; if(it.bought) x.bought++; }
+  }));
+  return Object.values(m).map(x=>{ x.conv = x.mfit ? x.bought/x.mfit : null; x.back = x.fit-x.taken; return x; });
+}
+function today(){
+  const res = visits.filter(v=>v.resolved), mat = visits.filter(v=>v.matched);
+  const items = res.flatMap(v=>v.items), mitems = mat.flatMap(v=>v.items);
+  const rs = {size:0,fit:0,color:0,price:0,none:0}; items.forEach(i=>{ if(i.out==="returned") rs[i.reason]++; });
+  return {
+    V: totalVisitors(), Rg: totalReg(), E: visits.length,
+    buyers: mat.filter(v=>v.items.some(i=>i.bought)).length, matched: mat.length,
+    pending: visits.filter(v=>v.resolved && !v.matched).length,
+    lost: seedLeft + seedNoshow + left + noshow,
+    items: items.length, mItems: mitems.length, sold: mitems.filter(i=>i.bought).length,
+    back: items.filter(i=>i.out==="returned").length, rs,
+  };
+}
+
+// ================= data panel =================
+function renderPos(){
+  const t = today();
+  $("posbox").innerHTML = t.pending
+    ? `<span>POS 매칭 대기 <b>${t.pending}건</b>${simOn?' · 자동 유입 중엔 15초마다 자동 매칭':''}</span><button class="small" id="posBtn">POS 판매 엑셀 불러와 매칭</button>`
+    : `<span><span class="live-dot"></span>POS 판매 매칭 완료 · ${clockStr()} 기준</span>`;
+}
+function stepHTML(label, v, rate, src, stCls, stTxt){
+  return `<div class="fs"><div class="lab">${label}</div><div class="v num-font">${v.toLocaleString("ko-KR")}</div>
+    <div class="r">${rate}</div><div class="src"><span class="st ${stCls}">${stTxt}</span>${src}</div></div>`;
+}
+function reasonStack(rs, total){
+  return `<div class="stack">${REASONS.map(r=> rs[r.k] ? `<div style="width:${rs[r.k]/total*100}%;background:${r.c}" title="${r.l} ${rs[r.k]}벌"></div>` : "").join("")}</div>
+    <div class="legend">${REASONS.map(r=>`<span><i style="background:${r.c}"></i>${r.l} ${pct(rs[r.k],total)}%</span>`).join("")}</div>`;
+}
+function renderFunnel(){
+  const t = today();
+  return `
+    <div class="funnel">
+      ${stepHTML("매장 방문", t.V, "오늘 누적", "입구 IR 카운터", "new", "신규")}
+      ${stepHTML("피팅 대기 등록", t.Rg, `방문의 <b>${pct(t.Rg,t.V)}%</b>`, "Keep 대기열", "have", "보유")}
+      ${stepHTML("피팅룸 입장", t.E, `등록의 <b>${pct(t.E,t.Rg)}%</b> · ${t.items}벌 인식`, "바코드 / RFID", "soon", "예정")}
+      ${stepHTML("구매", t.buyers, `입장(매칭분)의 <b>${pct(t.buyers,t.matched)}%</b> · ${t.sold}벌`, "POS 일 마감 매칭", "new", "신규")}
+    </div>
+    <div class="leak"><b class="num-font">${t.lost}팀</b> 대기 중 이탈·노쇼 — 피팅룸 앞까지 왔지만 POS에는 아무 기록도 안 남은 손님</div>
+    <div class="grid2" style="margin-top:18px">
+      <div class="card">
+        <h4>SKU별 퍼널 — 피팅 → 가져감 → 구매</h4>
+        <div class="cap">피팅룸에 들어간 횟수가 많은 순. 구매는 POS와 매칭된 방문만 계산해요.</div>
+        <div class="scroll-x">${skuTable(skuStats().sort((a,b)=>b.fit-a.fit), false)}</div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>놓고 간 이유 · 오늘 ${t.back}벌</h4>
+          <div class="cap">퇴실할 때 직원이 원탭으로 남긴 사유. POS·RFID·웨이팅 앱 어디에도 없는 데이터.</div>
+          ${reasonStack(t.rs, t.back||1)}
+        </div>
+        <div class="card">
+          <h4>데이터 출처</h4>
+          <div class="scroll-x"><table class="srcs">
+            <tr><th>구간</th><th>데이터</th><th>확보 방법</th></tr>
+            <tr><td>매장 유입</td><td>시간대별 방문객 수</td><td><span class="st new">신규</span>입구 센서</td></tr>
+            <tr><td>피팅 대기</td><td>대기 인원·시간·이탈</td><td><span class="st have">보유</span>Keep 대기열</td></tr>
+            <tr><td>피팅 상품</td><td>SKU·사이즈·컬러</td><td><span class="st soon">예정</span>바코드 / RFID</td></tr>
+            <tr><td>피팅 결과</td><td>가져감·놓고 감 + 사유</td><td><span class="st new">신규</span>직원 태블릿 원탭</td></tr>
+            <tr><td>판매</td><td>실제 구매 SKU</td><td><span class="st new">신규</span>POS 일 마감 엑셀</td></tr>
+            <tr><td>재고</td><td>진열 SKU 전체</td><td><span class="st later">로드맵</span>RFID 재고 연동</td></tr>
+          </table></div>
+        </div>
+      </div>
+    </div>`;
+}
+function skuTable(list, compact){
+  return `<table><thead><tr><th>상품</th><th>피팅</th><th>가져감</th><th>구매</th><th style="min-width:110px">피팅 후 구매율</th><th>많이 놓고 간 이유</th></tr></thead><tbody>
+    ${list.map(x=>{
+      const top = REASONS.map(r=>[r, x.rs[r.k]]).sort((a,b)=>b[1]-a[1])[0];
+      const c = x.conv; const low = c!==null && c < .3;
+      return `<tr><td><b style="font-weight:600">${x.s.name}</b><br><span class="sub" style="font-size:12px">${x.s.code} · ${x.s.color}</span></td>
+        <td class="num-font">${x.fit}</td><td class="num-font">${x.taken}</td><td class="num-font">${x.bought}${x.mfit<x.fit?`<span class="sub" style="font-size:11px"> /${x.mfit}</span>`:''}</td>
+        <td>${c===null?'<span class="sub">매칭 전</span>':`<div style="display:flex;align-items:center;gap:8px"><div class="bar ${low?'low':''}" style="flex:1"><i style="width:${Math.round(c*100)}%"></i></div><span class="num-font ${low?'warn':''}">${Math.round(c*100)}%</span></div>`}</td>
+        <td>${x.back&&top[1]?`<span style="color:${top[0].c};font-weight:600">${top[0].l}</span> <span class="sub">${pct(top[1],x.back)}%</span>`:'<span class="sub">–</span>'}</td></tr>`;
+    }).join("")}</tbody></table>`;
+}
+function renderStore(){
+  const st = skuStats();
+  const low = st.filter(x=>x.mfit>=3 && x.conv!==null).sort((a,b)=>a.conv-b.conv || b.fit-a.fit).slice(0,10);
+  const sizeWarn = st.filter(x=>x.rs.size>=3).sort((a,b)=>b.rs.size-a.rs.size);
+  const t = today();
+  // 인력 추천: 예상 피팅 등록 = 방문 × 등록률, 룸 4개가 시간당 감당 가능한 팀 수를 넘으면 +1
+  const regRate = t.Rg / Math.max(1,t.V);
+  const CAP = 22; // 룸 4개 × 시간당 약 5.5팀
+  const cur = nowHour();
+  const vals = HOURS.map((h,i)=>({h, fc:FORECAST[i], ac: visitors[h]||0, past: h<cur, now: h===cur}));
+  const max = Math.max(...vals.map(v=>Math.max(v.fc,v.ac)));
+  const hot = vals.filter(v=> v.h>=cur && v.fc*regRate > CAP);
+  const hotTxt = hot.length ? `${hot[0].h}~${hot[hot.length-1].h+1}시` : null;
+  return `
+    <div class="grid2">
+      <div>
+        <div class="card">
+          <h4>피팅룸엔 가는데 안 팔리는 상품 Top 10</h4>
+          <div class="cap">피팅 후 구매율이 낮은 순 (POS 매칭된 피팅 3회 이상). 사유가 사이즈면 재고, 핏·색상이면 진열·상품, 가격이면 프로모션 문제로 봅니다.</div>
+          <div class="scroll-x">${skuTable(low, true)}</div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>오늘 바꿀 것</h4>
+          <div class="cap">${clockStr()} 기준 자동 생성</div>
+          ${sizeWarn.slice(0,3).map(x=>{
+            const sz = Object.entries(x.sizeBack).sort((a,b)=>b[1]-a[1]).map(([s,n])=>`${s} ${n}`).join(" · ");
+            return `<div class="alert"><div class="ic">!</div><div><b>사이즈 결품 의심 · ${x.s.name}</b><span>사이즈 때문에 놓고 간 ${x.rs.size}벌 (입어본 사이즈 ${sz}). 위·아래 사이즈 백룸 재고 확인. 최대 회수 가능 ${won(x.rs.size*x.s.price)}</span></div></div>`;
+          }).join("")}
+          ${hotTxt?`<div class="alert"><div class="ic blue">+1</div><div><b>${hotTxt} 피팅룸 담당 1명 추가</b><span>예상 방문 대비 피팅 등록이 룸 4개가 감당하는 시간당 약 ${CAP}팀을 넘는 시간대예요.</span></div></div>`:""}
+          ${(()=>{ const c = low.find(x=>x.rs.color+x.rs.fit > x.rs.size); return c?`<div class="alert"><div class="ic blue">↻</div><div><b>진열 점검 · ${c.s.name}</b><span>${RL[c.rs.color>=c.rs.fit?'color':'fit']} 사유가 많아요. 다른 컬러·핏 옆으로 진열을 옮기고 다음 주 같은 요일과 구매율을 비교해 보세요.</span></div></div>`:"" })()}
+        </div>
+        <div class="card">
+          <h4>시간대별 방문객과 인력 추천</h4>
+          <div class="cap">진한 막대 = 오늘 실제, 연한 막대 = 지난 4주 같은 요일 평균. <span class="warn">+1</span> 표시 시간대에 피팅룸 담당 추가.</div>
+          <div class="hours">${vals.map(v=>`<div class="col ${hot.includes(v)?'hot':''}" title="${v.h}시 · 예상 ${v.fc}명 · 실제 ${v.ac}명">
+            <div class="fc" style="height:${v.fc/max*100}%"></div>
+            ${v.past||v.now?`<div class="ac" style="height:${v.ac/max*100}%"></div>`:''}
+            ${hot.includes(v)?`<span class="plus" style="bottom:calc(${v.fc/max*100}% + 2px)">+1</span>`:''}</div>`).join("")}</div>
+          <div class="axis">${HOURS.map(h=>`<span>${h}</span>`).join("")}</div>
+        </div>
+      </div>
+    </div>`;
+}
+// 다른 점포도 누적 카운트로 들고 있다가 자동 유입 중에 같이 쌓이게 (비율은 카운트에서 계산)
+const STORES = [
+  {name:"명동점", V:1840, reg:.081, lost:.12, conv:.38, size:.31, pace:1.25},
+  {name:"홍대점", V:1520, reg:.064, lost:.21, conv:.33, size:.27, pace:1.05},
+  {name:"신촌점", V:980,  reg:.072, lost:.08, conv:.41, size:.22, pace:.7},
+].map(s=>{
+  const V = jit(s.V,.1), Rg = Math.round(V*s.reg*(.9+R()*.2)), items = Math.round(Rg*2.4), back = Math.round(items*.55);
+  return {name:s.name, pace:s.pace, p:s, cV:V, cRg:Rg, cLost:Math.round(Rg*s.lost*(.85+R()*.3)), cItems:items, cSold:Math.round(items*s.conv*(.9+R()*.2)), cBack:back, cSize:Math.round(back*s.size*(.85+R()*.3))};
+});
+function storesTick(){ // 데모 1분마다 각 점포에 방문·피팅·구매가 조금씩 쌓임
+  STORES.forEach(s=>{
+    const v = Math.round((3 + R()*3) * s.pace); s.cV += v;
+    if(R() < s.p.reg*v){
+      s.cRg++; if(R() < s.p.lost){ s.cLost++; return; }
+      const n = 1 + Math.floor(R()*3.3); s.cItems += n;
+      for(let i=0;i<n;i++){ if(R() < s.p.conv) s.cSold++; else if(R() < .65){ s.cBack++; if(R() < s.p.size) s.cSize++; } }
+    }
   });
 }
-
-// ---------- HQ render ----------
-const hours = ["11","12","13","14","15","16","17","18","19","20"];
-const base  = [2,4,6,7,9,11,10,7,4,2];
 function renderHQ(){
-  const waiting = queue.filter(q=>q.status==="waiting").length;
-  $("kWait").textContent = waiting;
-  $("kAvg").textContent = doneDur.length ? Math.round(doneDur.reduce((a,b)=>a+b,0)/doneDur.length/1000) : "–";
-  $("kLeft").textContent = left + noshow;
-  $("kUtil").textContent = Math.round(rooms.filter(r=>r.occupant && r.occupant.status==="inroom").length/ROOMS*100) + "%";
-  const nowIdx = 3; // 14시
-  const vals = base.map((v,i)=> i===nowIdx ? Math.max(v, waiting) : v);
-  const max = Math.max(...vals, 1);
-  $("bars").innerHTML = vals.map((v,i)=>`<div class="${i===nowIdx?'now':(v>=9?'hot':'')}" style="height:${v/max*100}%" title="${hours[i]}시 ${v}팀"></div>`).join("");
-  $("axis").innerHTML = hours.map(h=>`<span>${h}</span>`).join("");
+  const t = today();
+  const me_ = {name:"강남점", live:true, V:t.V, reg:t.Rg/Math.max(1,t.V), lost:t.lost/Math.max(1,t.Rg), conv:t.sold/Math.max(1,t.mItems), size:t.rs.size/Math.max(1,t.back)};
+  const rows = [me_, ...STORES.map(s=>({name:s.name, V:s.cV, reg:s.cRg/s.cV, lost:s.cLost/Math.max(1,s.cRg), conv:s.cSold/Math.max(1,s.cItems), size:s.cSize/Math.max(1,s.cBack)}))];
+  const worst = {reg: Math.min(...rows.map(r=>r.reg)), lost: Math.max(...rows.map(r=>r.lost)), conv: Math.min(...rows.map(r=>r.conv)), size: Math.max(...rows.map(r=>r.size))};
+  const cell = (r,k) => `<td class="num-font ${r[k]===worst[k]?'worst':''}">${Math.round(r[k]*100)}%</td>`;
+  // 체인 전체 SKU: 강남점 실측 + 타 점포 (데모)
+  const st = skuStats().map((x,i)=>{
+    const others = Math.round(x.fit*2.6 + ((i*37)%9));
+    const oc = Math.min(.8, Math.max(.08, x.s.take*.9 + (((i*53)%7)-3)/100));
+    const fit = x.fit + others, bought = x.bought + Math.round(others*oc);
+    const mf = x.mfit + others;
+    return {x, fit, conv: bought/Math.max(1,mf)};
+  });
+  const mid = a => { const s=[...a].sort((p,q)=>p-q); return s[Math.floor(s.length/2)]; };
+  const mF = mid(st.map(s=>s.fit)), mC = mid(st.map(s=>s.conv));
+  const q = (hiF, hiC) => st.filter(s=> (s.fit>=mF)===hiF && (s.conv>=mC)===hiC).sort((a,b)=>b.fit-a.fit)
+    .map(s=>`<span class="tag" title="피팅 ${s.fit} · 구매율 ${Math.round(s.conv*100)}%">${s.x.s.name} ${Math.round(s.conv*100)}%</span>`).join("") || '<span class="sub" style="font-size:12px">없음</span>';
+  return `
+    <div class="grid2">
+      <div>
+        <div class="card">
+          <h4>점포 비교 · 오늘</h4>
+          <div class="cap">강남점은 이 데모의 실시간 수치, 나머지 점포는 예시. 빨간 숫자가 그 지표의 최하위 점포.</div>
+          <div class="scroll-x"><table>
+            <thead><tr><th>점포</th><th>방문객</th><th>피팅 등록률</th><th>대기 이탈률</th><th>피팅 후 구매율</th><th>사이즈 사유 비중</th></tr></thead>
+            <tbody>${rows.map(r=>`<tr><td><b style="font-weight:600">${r.name}</b>${r.live?'<span class="tag called">실시간</span>':''}</td><td class="num-font">${r.V.toLocaleString("ko-KR")}</td>${cell(r,"reg")}${cell(r,"lost")}${cell(r,"conv")}${cell(r,"size")}</tr>`).join("")}</tbody>
+          </table></div>
+        </div>
+        <div class="card locked">
+          <h4>아무도 안 집은 상품</h4>
+          <div class="cap">진열 SKU 전체 − 피팅된 SKU − 판매된 SKU</div>
+          <div class="blur"><table><tbody>${UNPICKED.map(([c,n])=>`<tr><td>${n}</td><td class="sub">${c}</td><td>진열 9일 · 피팅 0 · 판매 0</td></tr>`).join("")}</tbody></table></div>
+          <div class="over"><span class="st later">로드맵 4단계</span><b>RFID 재고 연동 후 제공</b><span>매장에 이미 붙은 재고용 RFID 태그를 읽게 되면 진열 SKU 전체가 같이 들어와서 이 분석이 열립니다.</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h4>상품별 관심 대비 구매 · 체인 전체</h4>
+        <div class="cap">가로 = 피팅 후 구매율, 세로 = 피팅룸에 들어간 횟수 (각각 중앙값 기준). MD·상품기획 팀에 그대로 넘기는 화면.</div>
+        <div class="quad">
+          <div class="q bad"><h5>관심 많음 · 구매 낮음</h5><p>입어보고 안 산다 → 사이즈 스펙·핏·가격 점검</p>${q(true,false)}</div>
+          <div class="q good"><h5>관심 많음 · 구매 높음</h5><p>효자 상품 → 재고 우선 배분</p>${q(true,true)}</div>
+          <div class="q"><h5>관심 적음 · 구매 낮음</h5><p>관망 → 할인·정리 후보</p>${q(false,false)}</div>
+          <div class="q exp"><h5>관심 적음 · 구매 높음</h5><p>입으면 산다 → 진열·노출 늘리기</p>${q(false,true)}</div>
+        </div>
+        <p class="note">수익 구조: 매장 구독(월 20만원) → 본사 데이터 리포트 구독 → 브랜드 간 익명 벤치마크</p>
+      </div>
+    </div>`;
 }
+function renderData(){
+  renderPos();
+  $("dbody").innerHTML = dataTab==="funnel" ? renderFunnel() : dataTab==="store" ? renderStore() : renderHQ();
+}
+$("dtabs").addEventListener("click", e=>{
+  if(e.target.id==="posBtn"){ posMatch(); renderAll(); return; }
+  const b = e.target.closest("button[data-tab]"); if(!b) return;
+  dataTab = b.dataset.tab;
+  $("dtabs").querySelectorAll("button[data-tab]").forEach(x=>x.classList.toggle("on", x===b));
+  renderData();
+});
 
-// ---------- sim ----------
+// ================= sim =================
 function simTick(){
   if(!simOn) return;
   const n = names[Math.floor(Math.random()*names.length)] + (seq%9+1);
   const c = addCustomer(n, 1+Math.floor(Math.random()*4), Math.random()<0.35, true);
   log(`<b>${c.num}번</b> ${c.name} 대기 등록 (QR)`);
-  // some simulated customers give up when the queue is long
   const waiting = queue.filter(q=>q.status==="waiting").length;
   if(waiting>5 && Math.random()<0.25){ const victim = queue.filter(q=>q.status==="waiting"&&q.sim).pop(); if(victim) setTimeout(()=>{ if(victim.status==="waiting"){ leaveQueue(victim); renderAll(); } }, 3000); }
+  // 빈 룸이 있으면 직원이 바로 다음 팀을 부르는 흐름
+  if(Math.random()<.7) setTimeout(()=>{ callNext(); renderAll(); }, 1200);
   renderAll();
   simTimer = setTimeout(simTick, 3500+Math.random()*3000);
 }
-$("sim").onchange = e => { simOn = e.target.checked; if(simOn) simTick(); else clearTimeout(simTimer); };
+let lastPos = Date.now();
+function simTick2(){ // 1초(데모 1분)마다: 다른 점포 누적 + 15초마다 POS 자동 매칭
+  if(!simOn) return;
+  storesTick();
+  if(Date.now()-lastPos > 15000 && visits.some(v=>v.resolved && !v.matched)){ posMatch(); lastPos = Date.now(); }
+}
+setInterval(simTick2, 1000);
+function setSim(on){ simOn = on; $("sim").checked = on; if(on){ simTick(); doorTick(); } else { clearTimeout(simTimer); clearTimeout(doorTimer); } }
+$("sim").onchange = e => setSim(e.target.checked);
 
-// ---------- wiring ----------
+// ================= wiring =================
 $("callNext").onclick = ()=>{ callNext(); renderAll(); };
-$("reset").onclick = ()=>{ location.reload(); };
-function renderAll(){ renderCustomer(); renderStaff(); renderHQ(); }
-setInterval(()=>{ renderStaff(); renderHQ(); const m=840+mins(Date.now()-t0); $("clock").textContent=`데모 시계 1초 = 1분 · ${String(Math.floor(m/60)).padStart(2,"0")}:${String(m%60).padStart(2,"0")}`; }, 1000);
+$("reset").onclick = ()=> location.reload();
+function renderAll(){ renderCustomer(); renderStaff(); renderDoor(); renderData(); }
+setInterval(()=>{ renderStaff(); renderDoor(); renderData(); $("clock").textContent = `데모 시계 1초 = 1분 · ${clockStr()}`; }, 1000);
 renderAll();
-log("스파오 강남점 2층 피팅룸 대기 오픈");
-</script>
-<nav class="tabs"><button data-t="0" class="on">고객 폰</button><button data-t="1">직원 태블릿</button><button data-t="2">본사</button></nav>
-<script>
+log("스파오 강남점 2층 피팅룸 대기 오픈 · 오전(11~13시) 데이터 불러옴");
+setSim(true); // 열자마자 손님이 들어오고 숫자가 움직이게
+
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
-  document.querySelectorAll('main > section')[+b.dataset.t].scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelectorAll('main > section, main > .side')[+b.dataset.t].scrollIntoView({behavior:'smooth',block:'start'});
 });
 </script>
 </body>
